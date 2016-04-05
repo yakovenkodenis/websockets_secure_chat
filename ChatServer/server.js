@@ -1,16 +1,31 @@
 import { getExternalIpAddress } from './utils/inet';
 
 
-const server = require('net').createServer(),
-      io = require('socket.io')(server);
-
-const handleClient = (socket) => {
-
-    socket.emit('tweet', {user: 'nodesource', text: 'Hello, World!'});
-};
-
-
 console.log(getExternalIpAddress());
 
-io.on('connection', handleClient);
-server.listen(8080);
+const io = require('socket.io')();
+
+io.on('connection', (socket) => {
+    console.log('A user connected');
+
+    socket.emit('tweet', {user: 'nodesource', text: 'Hello, World!'});
+
+    socket.on('disconnect', () => {
+        console.log('user disconnected')
+    });
+
+    setInterval(() => {
+        socket.emit('chat_message', {hello: 'world'});
+
+    }, 1000);
+
+    socket.on('hello', (msg) => {
+        console.log(msg);
+    });
+
+    socket.on('chat_message', (msg) => {
+        console.log(msg);
+    });
+});
+
+io.listen(8080);
