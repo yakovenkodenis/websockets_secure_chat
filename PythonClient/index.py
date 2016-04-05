@@ -14,6 +14,6 @@ with SocketIO('http://192.168.0.110', 8080, LoggingNamespace) as socketIO:
     socketIO.emit('hello', {'xxx': 'yyy'}, on_bbb_response)
     # socketIO.wait_for_callbacks(seconds=1)
 
-    socketIO.on('chat message', on_chat_message_response)
+    socketIO.on('chat_message', on_chat_message_response)
 
 print('hello')
