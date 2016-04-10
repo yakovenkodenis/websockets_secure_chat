@@ -7,6 +7,7 @@ CBC = 1
 PAD_NORMAL = 1
 PAD_PKCS5 = 2
 
+
 class BaseDes(object):
     def __init__(self, mode=ECB, IV=None, pad=None, padmode=PAD_NORMAL):
         if IV:
@@ -496,7 +497,7 @@ class DES(BaseDes):
 
         # Split the data into blocks crypting each one separately
         i = 0
-        dict = {}
+        # dict = {}
         result = []
         # chached = 0
         # lines = 0
