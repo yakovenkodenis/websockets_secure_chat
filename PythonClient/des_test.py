@@ -1,6 +1,7 @@
 from des_var2 import *
 
-
+# TODO currently does not unpad the data.
+# Also, needs to be refactored to use PKCS7 instead of PKCS5.
 data = b'message'
 
 key = des(b'PASSWORD', mode=ECB, IV='\0\0\0\0\0\0\0\0', pad='*', padmode=PAD_NORMAL)
