@@ -1,5 +1,5 @@
 
-def hash_function(s=''):
+def hash_function(s=b''):
     a, b, c, d = 0xa0, 0xb1, 0x11, 0x4d
 
     for byte in bytearray(s):
