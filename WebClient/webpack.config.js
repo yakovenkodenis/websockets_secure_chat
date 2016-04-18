@@ -1,8 +1,14 @@
 var HtmlWebpackPlugin = require('html-webpack-plugin');
-var HtmlWebpackPluginConfig = new HtmlWebpackPlugin({
+
+var HtmlWebpackPluginConfigForJS = new HtmlWebpackPlugin({
     template: __dirname + '/app/index.html',
     filename: 'index.html',
     inject: 'body'
+});
+var HtmlWebpackPluginConfigForStyles = new HtmlWebpackPlugin({
+    template: __dirname + '/app/index.html',
+    filename: 'index.styl',
+    inject: 'head'
 });
 
 module.exports = {
@@ -14,6 +20,8 @@ module.exports = {
         path: __dirname + '/dist',
         filename: 'index_bundle.js'
     },
+    devtool: 'source-map',
+    cache: true,
     module: {
         loaders: [
             {
@@ -29,7 +37,8 @@ module.exports = {
         ]
     },
     plugins: [
-        HtmlWebpackPluginConfig
+        HtmlWebpackPluginConfigForJS,
+        HtmlWebpackPluginConfigForStyles
     ],
     stylus: {
         use: [require('nib')(), require('rupture')()],
