@@ -1,2 +1,86 @@
 *
-    background red
+    margin 0
+    padding 0
+    -webkit-box-sizing border-box
+    -moz-box-sizing border-box
+    box-sizing border-box
+
+body
+    background #fff
+
+ul.chat-log
+    list-style none
+
+.chat-log
+    max-width 20em
+    margin 0 auto
+
+    .chat-log__entry
+        margin .5em
+
+.chat-log__entry
+    display flex
+    -webkit-flex-direction row
+    -ms-flex-direction row
+    flex-direction row
+    -webkit-align-items flex-end
+    align-items flex-end
+    max-width 100%
+
+    &.chat-log__entry_mine
+        -webkit-flex-direction row-reverse
+        -ms-flex-direction row-reverse
+        flex-direction row-reverse
+
+        .chat-log__avatar
+            display none
+
+        .chat-log__message
+            border-top 1px solid #07f
+            border-bottom 1px solid #07f
+            background-color #08f
+            color #fff
+
+            &::before
+                right -12px
+                bottom 0.6em
+                left auto
+                border 6px solid transparent
+                border-left-color #08f
+
+    .chat-log__message
+        position relative
+        margin 0 12px
+
+        &::before
+            position absolute
+            right auto
+            bottom 0.6em
+            left -12px
+            height 0
+            content ''
+            border 6px solid transparent
+            border-right-color #ddd
+            z-index 2
+
+.chat-log__avatar
+    -webkit-flex-shrink 0
+    flex-shrink 0
+    -webkit-flex-grow 0
+    flex-grow 0
+    z-index 1
+    height 50px
+    width 50px
+    -webkit-border-radius 25px
+    border-radius 25px
+
+.chat-log__message
+    background-color #ddd
+    padding .5em
+    -webkit-border-radius 4px
+    border-radius 4px
+    font-weight lighter
+    max-width 70%
+
+    .chat-log__timestamp
+        display none

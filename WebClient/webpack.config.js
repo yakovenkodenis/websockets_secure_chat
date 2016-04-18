@@ -5,11 +5,6 @@ var HtmlWebpackPluginConfigForJS = new HtmlWebpackPlugin({
     filename: 'index.html',
     inject: 'body'
 });
-var HtmlWebpackPluginConfigForStyles = new HtmlWebpackPlugin({
-    template: __dirname + '/app/index.html',
-    filename: 'index.styl',
-    inject: 'head'
-});
 
 module.exports = {
     entry: [
@@ -37,8 +32,7 @@ module.exports = {
         ]
     },
     plugins: [
-        HtmlWebpackPluginConfigForJS,
-        HtmlWebpackPluginConfigForStyles
+        HtmlWebpackPluginConfigForJS
     ],
     stylus: {
         use: [require('nib')(), require('rupture')()],
