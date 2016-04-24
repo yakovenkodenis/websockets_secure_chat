@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 from random import choice, seed
@@ -34,4 +35,16 @@ coll_prob = 1 - no_collision
 print('Probability of collision in %d keys is %f' % (keys, coll_prob))
 
 plt.plot(keys_arr, 1 - no_coll_probs)
+plt.show()
+
+
+probUnique = 1.0
+keys_arr = np.array(range(1, keys))
+coll_probs = []
+for k in range(1, keys):
+    probUnique = probUnique * (n - (k - 1)) / n
+    coll_probs.append((1 - math.exp(-0.5 * k * (k - 1) / n)))
+    print(k, 1 - probUnique, 1 - math.exp(-0.5 * k * (k - 1) / n))
+
+plt.plot(keys_arr, coll_probs)
 plt.show()
