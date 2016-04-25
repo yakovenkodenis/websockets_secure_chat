@@ -14,17 +14,9 @@ io.on('connection', (socket) => {
         console.log('user disconnected')
     });
 
-    setInterval(() => {
-        socket.emit('chat_message', {hello: 'world'});
-
-    }, 1000);
-
-    socket.on('hello', (msg) => {
-        console.log(msg);
-    });
-
     socket.on('chat_message', (msg) => {
         console.log(msg);
+        socket.broadcast.emit('chat_message', { 'message': msg });
     });
 });
 

@@ -1,10 +1,13 @@
 var HtmlWebpackPlugin = require('html-webpack-plugin');
+var ExtractTextPlugin = require('extract-text-webpack-plugin');
 
 var HtmlWebpackPluginConfigForJS = new HtmlWebpackPlugin({
     template: __dirname + '/app/index.html',
     filename: 'index.html',
     inject: 'body'
 });
+
+var extractStylus = new ExtractTextPlugin('[name].styl');
 
 module.exports = {
     entry: [
@@ -28,7 +31,12 @@ module.exports = {
                 test: /\.styl$/,
                 exclude: /(node_modules|bower_components)/,
                 loader: 'style-loader!css-loader!stylus-loader'
-            }
+            },
+            // {
+            //     test: /\.styl$/,
+            //     exclude: /(node_modules|bower_components)/,
+            //     loader: extractStylus.extract(['css', 'stylus'])
+            // }
         ]
     },
     plugins: [
