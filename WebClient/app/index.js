@@ -1,10 +1,17 @@
 require('./index.styl');
 
 import io from 'socket.io-client';
+import { randInt } from './util/random';
 import {
     getHTMLNodeForMessage
 } from './util/chatFunctions';
 
+
+
+global.P = null;
+global.G = null;
+global.KEY_LENGTH = null;
+global.PRIVATE_KEY = randInt();
 
 const address = 'http://192.168.1.101:8080',
       socket = io(address, { origins: '*:*' });
@@ -42,6 +49,13 @@ textArea.addEventListener('keydown', (e) => {
 
 socket.on('connect', () => {
     console.log('A new user connected!');
+});
+
+socket.on('public_keys', (data) => {
+    const keys = data['message'];
+    P = keys['p'];
+    G = keys['g'];
+    KEY_LENGTH = keys['key_length'];
 });
 
 socket.on('chat_message', (data) => {
