@@ -1,20 +1,35 @@
 require('./index.styl');
-import { getHTMLNodeForMessage } from './util/chatFunctions';
+
 import io from 'socket.io-client';
+import {
+    getHTMLNodeForMessage
+} from './util/chatFunctions';
+
+
+const address = 'http://192.168.1.101:8080',
+      socket = io(address, { origins: '*:*' });
+
+function appendChatLogWithHTMLNodeEvent(e, message) {
+    const msg = message ? message : textArea.value;
+    const sender = message ? 'other' : 'mine';
+
+    if (msg !== '') {
+        chatLog.appendChild(getHTMLNodeForMessage(msg, sender));
+        chatLog.scrollIntoView(false);
+        textArea.value = '';
+
+        if (sender === 'mine') {
+            socket.emit('chat_message', {'payload': msg});
+        }
+    }
+}
 
 
 const chatLog = document.querySelector('ul.chat-log'),
       sendBtn = document.querySelector('.control-group--btn'),
       textArea = document.querySelector('.input-form--wrapper textarea');
 
-sendBtn.addEventListener('click', () => {
-    const msg = textArea.value;
-
-    if (msg !== '') {
-        chatLog.appendChild(getHTMLNodeForMessage(msg));
-        chatLog.scrollIntoView(false);
-    }
-});
+sendBtn.addEventListener('click', appendChatLogWithHTMLNodeEvent);
 
 textArea.addEventListener('keydown', (e) => {
     if (!e) {
@@ -25,16 +40,11 @@ textArea.addEventListener('keydown', (e) => {
     }
 });
 
-// const address = 'http://192.168.1.101:8080';
+socket.on('connect', () => {
+    console.log('A new user connected!');
+});
 
-// const socket = io(address, { origins: '*:*' });
-
-// socket.on('connect', () => {
-//     console.log('Connected!');
-// });
-
-// socket.on('chat_message', (data) => {
-//     console.log(data);
-// });
-
-// socket.emit('chat_message', {'payload': 'hey'})
+socket.on('chat_message', (data) => {
+    console.log(data);
+    appendChatLogWithHTMLNodeEvent(null, data['message'].payload);
+});
