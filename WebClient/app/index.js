@@ -11,8 +11,8 @@ sendBtn.addEventListener('click', () => {
     const msg = textArea.value;
 
     if (msg !== '') {
-        console.log(msg);
         chatLog.appendChild(getHTMLNodeForMessage(msg));
+        chatLog.scrollIntoView(false);
     }
 });
 
