@@ -19,12 +19,9 @@ io.on('connection', (socket) => {
 
     }, 1000);
 
-    socket.on('hello', (msg) => {
-        console.log(msg);
-    });
-
     socket.on('chat_message', (msg) => {
-        console.log(msg);
+        console.log(msg, typeof msg);
+        io.emit('chat_message', { 'message': msg });
     });
 });
 
