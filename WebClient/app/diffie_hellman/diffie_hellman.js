@@ -4,7 +4,7 @@ import { hashFunction } from '../hash/hashFunction';
 
 export default class DiffieHellman {
 
-    constructor(generator=2, prime=11, keyLength=3) {
+    constructor(generator=2, prime=11, keyLength=3, privateKey) {
         const defaultGenerator = 2,
               validGenerators = [2, 3, 5, 7];
 
@@ -17,7 +17,13 @@ export default class DiffieHellman {
 
         this.keyLength = keyLength;
         this.prime = prime;
-        this.privateKey = this.genPrivateKey(this.keyLength);
+
+        if (privateKey) {
+            this.privateKey = privateKey;
+        } else {
+            this.privateKey = this.genPrivateKey(this.keyLength);
+        }
+
         this.publicKey = this.genPublicKey();
     }
 
@@ -51,7 +57,6 @@ export default class DiffieHellman {
 
     genKey(otherKey) {
         this.sharedSecret = this.genSecret(this.privateKey, otherKey);
-        console.log('SharedSecret: '+this.sharedSecret);
 
         let _sharedSecretBytes;
 
@@ -74,6 +79,10 @@ export default class DiffieHellman {
 
     getPublicKey() {
         return this.publicKey;
+    }
+
+    getSharedSecret() {
+        return this.sharedSecret;
     }
 
     getKey() {

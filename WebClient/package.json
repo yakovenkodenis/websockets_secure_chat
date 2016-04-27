@@ -43,6 +43,7 @@
     "webpack-dev-server": "^1.14.1"
   },
   "dependencies": {
+    "secure-random": "^1.1.1",
     "socket.io-client": "^1.4.5"
   }
 }
