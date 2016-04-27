@@ -12,21 +12,17 @@ except (AttributeError, ImportError):
 
 class DiffieHellman(object):
 
-    def __init__(self, generator=2, prime=11, key_length=540):
-
-        default_generator = 2
-        valid_generators = [2, 3, 5, 7]
-
-        if generator not in valid_generators:
-            print('Invalid generator. Using default')
-            self.generator = default_generator
-        else:
-            self.generator = generator
-
+    def __init__(self, generator=2, prime=11,
+                 key_length=540, private_key=None):
+        self.generator = generator
         self.key_length = key_length
-
         self.prime = prime
-        self.private_key = self.gen_private_key(self.key_length)
+
+        if private_key:
+            self.private_key = private_key
+        else:
+            self.private_key = self.gen_private_key(self.key_length)
+
         self.public_key = self.gen_public_key()
 
     def get_random(self, bits):
@@ -49,7 +45,6 @@ class DiffieHellman(object):
 
     def gen_key(self, other_key):
         self.shared_secret = self.gen_secret(self.private_key, other_key)
-        print('Shared secret: ' + str(self.shared_secret))
 
         try:
             _shared_secret_bytes = self.shared_secret.to_bytes(
@@ -63,6 +58,9 @@ class DiffieHellman(object):
 
     def get_key(self):
         return self.key
+
+    def get_shared_secret(self):
+        return self.shared_secret
 
     def show_params(self):
         print('Parameters:')
