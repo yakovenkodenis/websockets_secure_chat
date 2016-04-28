@@ -128,8 +128,12 @@ class BaseDes(object):
                 pad = self.getPadding()
 
             if pad:
-                data = data[:-self.block_size] + \
-                    data[-self.block_size].rstrip(pad)
+                try:
+                    data = data[:-self.block_size] + \
+                        data[-self.block_size].rstrip(pad)
+                except Exception as e:
+                    print(e)
+
 
         elif padmode == PAD_PKCS5:
             pad_len = data[-1]
