@@ -141,7 +141,18 @@ class DES(object):
         self.key = key
 
     def encrypt_64bit(self, message):
-        bits_array_msg = self._string_to_bitsarray(message)
+        return self.crypt(message, encrypt=True)
+
+    def decrypt_64bit(self, message, msg_in_bits=False):
+        return self.crypt(message, encrypt=False, msg_in_bits=msg_in_bits)
+
+    def crypt(self, message, encrypt=True, msg_in_bits=False):
+        bits_array_msg = []
+        if msg_in_bits:
+            bits_array_msg = message
+        else:
+            bits_array_msg = self._string_to_bitsarray(message)
+
         bits_array_key = self._string_to_bitsarray(self.key)
 
         if len(bits_array_msg) != 64:
@@ -158,11 +169,18 @@ class DES(object):
 
         L, R = msg[:32], msg[32:]
 
-        for i in range(16):
-            prev_r = R
-            r_feistel = self.feistel_function(R, subkeys[i])
-            R = [L[i] ^ r_feistel[i] for i in range(32)]
-            L = prev_r
+        if encrypt:
+            for i in range(16):
+                prev_r = R
+                r_feistel = self.feistel_function(R, subkeys[i])
+                R = [L[i] ^ r_feistel[i] for i in range(32)]
+                L = prev_r
+        else:
+            for i in reversed(range(16)):
+                prev_l = L
+                l_feistel = self.feistel_function(L, subkeys[i])
+                L = [R[i] ^ l_feistel[i] for i in range(32)]
+                R = prev_l
 
         before_final_permute = L + R
         return [before_final_permute[i - 1] for i in self._final_permutation]
