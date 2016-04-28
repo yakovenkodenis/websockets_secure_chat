@@ -1,4 +1,5 @@
 import bitarray
+import itertools
 from collections import deque
 
 
@@ -155,16 +156,31 @@ class DES(object):
         # Convert the message using the initial permutation block
         msg = [bits_array_msg[i - 1] for i in self._initial_permutation]
 
+        L, R = msg[:32], msg[32:]
 
+        for i in range(16):
+            prev_r = R
+            r_feistel = self.feistel_function(R, subkeys[i])
+            R = [L[i] ^ r_feistel[i] for i in range(32)]
+            L = prev_r
+
+        before_final_permute = L + R
+        return [before_final_permute[i - 1] for i in self._final_permutation]
 
     def feistel_function(self, r_32bit, subkey_48bit):
-        r_48bit = [r_32bit[i] for i in self._expansion_function]
+        r_48bit = [r_32bit[i - 1] for i in self._expansion_function]
         subkey_xor_r = [r_48bit[i] ^ subkey_48bit[i] for i in range(48)]
 
         # Divide subkey_xor_r into 8 6-bit blocks for computing s-boxes
         b_6_bit_blocks = [subkey_xor_r[i:i + 6] for i in range(0, 48, 6)]
 
-        # TODO Compute 8 s-boxes
+        # Compute 8 s-boxes and concatenate them into 32-bit vector
+        after_sboxes_32bit = list(itertools.chain(*[
+            self.compute_s_box(
+                self._sbox[i], b_6_bit_blocks[i]) for i in range(8)
+        ]))
+        # Compute the permutation and return the 32-bit block
+        return [int(after_sboxes_32bit[i - 1]) for i in self._permutation]
 
     def compute_s_box(self, sbox, b_6_bit):
         row = int(''.join(str(x) for x in [b_6_bit[0], b_6_bit[5]]), 2)
@@ -199,8 +215,7 @@ class DES(object):
 
         return subkeys_48bit
 
-    def _string_to_bitsarray(string):
+    def _string_to_bitsarray(self, string):
         ba = bitarray.bitarray()
         ba.fromstring(string)
         return [1 if i else 0 for i in ba.tolist()]
-
