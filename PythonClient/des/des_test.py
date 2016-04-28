@@ -3,7 +3,7 @@ from des import DES
 
 d = DES('qwertyui')
 
-cipher = d.encrypt_64bit('hello we')
+cipher = d.encrypt_64bit('heleo we')
 
 l = cipher
 
@@ -28,3 +28,12 @@ deciphered_str = ''.join(chr(int(
     ''.join(map(str, l[i:i + 8])), 2)) for i in range(0, len(l), 8))
 
 print(deciphered_str)
+
+print('------------------------')
+
+
+print(d._string_to_bitsarray('hi'))
+
+print('----------------------------')
+
+print(d.get_subkeys([0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1]))
