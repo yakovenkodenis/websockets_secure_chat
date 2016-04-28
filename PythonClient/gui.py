@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import base64
 import threading
 from tkinter import *
 from des_var2 import *
@@ -40,6 +41,7 @@ OTHER_PUBLIC_KEY = None
 DES_HASH_PRIVATE_KEY = None
 DH = None
 DES = None
+MESSAGE_COUNT = 0
 
 
 def emit_message(address=ADDRESS, port=PORT, message=''):
@@ -47,25 +49,35 @@ def emit_message(address=ADDRESS, port=PORT, message=''):
         # TODO encrypt DES message
 
         global DES
+        global MESSAGE_COUNT
 
-        if not DES and DES_HASH_PRIVATE_KEY:
-            DES = des(bytes(DES_HASH_PRIVATE_KEY, 'ascii'), mode=ECB,
-                      IV='\0\0\0\0\0\0\0\0', pad='*', padmode=PAD_NORMAL)
+        MESSAGE_COUNT += 1
 
-        if DES:
-            message = bytes(message, 'ascii')
-            print('BEFORE ENCRYPTION: ' + str(message))
-            message = DES.encrypt(message)
-            print('AFTER ENCRYPTION: ' + str(message))
+        if MESSAGE_COUNT != 1:
+            if not DES and DES_HASH_PRIVATE_KEY:
+                DES = des(bytes(DES_HASH_PRIVATE_KEY, 'ascii'), mode=ECB,
+                          IV='\0\0\0\0\0\0\0\0', pad='*', padmode=PAD_NORMAL)
+
+            if DES:
+                message = bytes(message, 'ascii')
+                print('BEFORE ENCRYPTION: ' + str(message))
+                message = DES.encrypt(message)
+                print('AFTER ENCRYPTION: ' + str(message))
 
         print('ENCRYPTED_RESPONSE: ' + str(message))
         print('DES_HASH_PRIVATE_KEY: ' + str(DES_HASH_PRIVATE_KEY))
         print(DES)
 
+        if type(message) != 'bytes':
+            message = bytes(message, 'ascii')
+
+        message = str(base64.b64encode(message), 'ascii')
+
         response = {
             'payload': message,
             'sender': 'me',
-            'public_shared_key': GENERATED_PUBLIC_KEY
+            'public_shared_key': GENERATED_PUBLIC_KEY,
+            'encrypted': MESSAGE_COUNT != 1
         }
         socketIO.emit('chat_message', response, on_bbb_response)
 
@@ -83,40 +95,45 @@ def add_message_to_chat_log(*data):
 
         msg = message.get('payload')
         other_public_key = message.get('public_shared_key')
+        encrypted = bool(message.get('encrypted'))
 
-        global OTHER_PUBLIC_KEY
-        global SHARED_KEY
-        global DES_HASH_PRIVATE_KEY
-        global DH
+        if encrypted:
 
-        if not OTHER_PUBLIC_KEY or (
-           OTHER_PUBLIC_KEY and OTHER_PUBLIC_KEY != other_public_key):
-            OTHER_PUBLIC_KEY = other_public_key
+            global OTHER_PUBLIC_KEY
+            global SHARED_KEY
+            global DES_HASH_PRIVATE_KEY
+            global DH
 
-            if DH:
-                DH.gen_key(OTHER_PUBLIC_KEY)
-                SHARED_KEY = DH.get_shared_secret()
-                print('P: ' + str(P))
-                print('G: ' + str(G))
-                print('PRIVATE_KEY:' + str(PRIVATE_KEY))
-                print('OTHER_PUBLIC_KEY:' + str(OTHER_PUBLIC_KEY))
-                print('SHARED_KEY: ' + str(SHARED_KEY))
-                des_hash = hash_function(bytes(str(SHARED_KEY), 'ascii'))
-                DES_HASH_PRIVATE_KEY = des_hash
-                print('DES_HASH_PRIVATE_KEY: ' + str(DES_HASH_PRIVATE_KEY))
+            if not OTHER_PUBLIC_KEY or (
+               OTHER_PUBLIC_KEY and OTHER_PUBLIC_KEY != other_public_key):
+                OTHER_PUBLIC_KEY = other_public_key
 
-        # TODO decrypt DES msg
+                if DH:
+                    DH.gen_key(OTHER_PUBLIC_KEY)
+                    SHARED_KEY = DH.get_shared_secret()
+                    print('P: ' + str(P))
+                    print('G: ' + str(G))
+                    print('PRIVATE_KEY:' + str(PRIVATE_KEY))
+                    print('OTHER_PUBLIC_KEY:' + str(OTHER_PUBLIC_KEY))
+                    print('SHARED_KEY: ' + str(SHARED_KEY))
+                    des_hash = hash_function(bytes(str(SHARED_KEY), 'ascii'))
+                    DES_HASH_PRIVATE_KEY = des_hash
+                    print('DES_HASH_PRIVATE_KEY: ' + str(DES_HASH_PRIVATE_KEY))
 
-        print('CIPHERED_MESSAGE: ' + str(msg))
+            # TODO decrypt DES msg
 
-        global DES
+            print('CIPHERED_MESSAGE: ' + str(msg))
 
-        if not DES and DES_HASH_PRIVATE_KEY:
-            DES = des(bytes(DES_HASH_PRIVATE_KEY, 'ascii'), mode=ECB,
-                      IV='\0\0\0\0\0\0\0\0', pad='*', padmode=PAD_NORMAL)
+            global DES
 
-        if DES:
-            msg = DES.decrypt(msg)
+            if not DES and DES_HASH_PRIVATE_KEY:
+                # DES = des(bytes(DES_HASH_PRIVATE_KEY, 'ascii'), mode=ECB,
+                #           IV='\0\0\0\0\0\0\0\0', pad='*', padmode=PAD_NORMAL)
+                DES = des(bytes(DES_HASH_PRIVATE_KEY, 'ascii'), mode=ECB,
+                          IV='\0\0\0\0\0\0\0\0', padmode=PAD_PKCS5)
+
+            if DES:
+                msg = DES.decrypt(msg)
 
         log.insert(END, msg + '\n')
         log.see('end')
