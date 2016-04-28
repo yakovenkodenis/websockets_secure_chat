@@ -23,6 +23,7 @@ global.OTHER_PUBLIC_KEY = null;
 global.DES_HASH_PRIVATE_KEY = null;
 global.DH = null;
 global.DES = null;
+global.MESSAGE_COUNT = 0;
 
 
 function appendChatLogWithHTMLNodeEvent(e, message) {
@@ -36,17 +37,20 @@ function appendChatLogWithHTMLNodeEvent(e, message) {
 
         if (sender === 'mine') {
 
+            MESSAGE_COUNT++;
             // TODO DES encrypt message
 
-            if (DES_HASH_PRIVATE_KEY) {
-                msg = des(DES_HASH_PRIVATE_KEY, msg, 1, 0, '0x0000000000000000', '*');
+            if (DES_HASH_PRIVATE_KEY && MESSAGE_COUNT !== 1) {
+                // msg = des(DES_HASH_PRIVATE_KEY, msg, 1, 0, '0x0000000000000000', '*');
+                msg = des(DES_HASH_PRIVATE_KEY, msg, 1, 0, '0x0000000000000000', 1);
             }
 
             console.log('ENCRYPTED_RESPONSE: ' + msg);
 
             const response = {
                 'payload': msg,
-                'public_shared_key': GENERATED_PUBLIC_KEY
+                'public_shared_key': GENERATED_PUBLIC_KEY,
+                'encrypted': MESSAGE_COUNT != 1
             }
 
             socket.emit('chat_message', response);
@@ -99,34 +103,36 @@ socket.on('chat_message', (data) => {
 
     let message = data['message'].payload;
     let otherPublicKey = data['message'].public_shared_key;
+    let encrypted = data['message'].encrypted;
 
-    if (!OTHER_PUBLIC_KEY ||
-        (OTHER_PUBLIC_KEY && OTHER_PUBLIC_KEY !== otherPublicKey)) {
-        OTHER_PUBLIC_KEY = otherPublicKey;
+    message = new Buffer(message, 'base64').toString();
 
-        if (DH) {
-            DH.genKey(OTHER_PUBLIC_KEY);
-            SHARED_KEY = DH.getSharedSecret();
-            console.log('P: ' + P);
-            console.log('G: ' + G);
-            console.log('PRIVATE_KEY: ' + PRIVATE_KEY);
-            console.log('OTHER_PUBLIC_KEY: ' + OTHER_PUBLIC_KEY);
-            console.log('SHARED_KEY: ' + SHARED_KEY);
-            DES_HASH_PRIVATE_KEY = hashFunction(SHARED_KEY.toString());
-            console.log('DES_HASH_PRIVATE_KEY: ' + DES_HASH_PRIVATE_KEY);
+    if (encrypted) {
+        if (!OTHER_PUBLIC_KEY ||
+            (OTHER_PUBLIC_KEY && OTHER_PUBLIC_KEY !== otherPublicKey)) {
+            OTHER_PUBLIC_KEY = otherPublicKey;
+
+            if (DH) {
+                DH.genKey(OTHER_PUBLIC_KEY);
+                SHARED_KEY = DH.getSharedSecret();
+                console.log('P: ' + P);
+                console.log('G: ' + G);
+                console.log('PRIVATE_KEY: ' + PRIVATE_KEY);
+                console.log('OTHER_PUBLIC_KEY: ' + OTHER_PUBLIC_KEY);
+                console.log('SHARED_KEY: ' + SHARED_KEY);
+                DES_HASH_PRIVATE_KEY = hashFunction(SHARED_KEY.toString());
+                console.log('DES_HASH_PRIVATE_KEY: ' + DES_HASH_PRIVATE_KEY);
+            }
+        }
+
+        // TODO DES decrypt message
+
+        console.log('CIPHERED_MESSAGE: ' + message);
+
+        if (DES_HASH_PRIVATE_KEY) {
+            message = des(DES_HASH_PRIVATE_KEY, message, 0, 0);
         }
     }
 
-    // TODO DES decrypt message
-
-    let msg = data['message'].payload;
-
-    console.log('CIPHERED_MESSAGE: ' + msg);
-
-    if (DES_HASH_PRIVATE_KEY && msg !== 'hello') {
-        msg = des(DES_HASH_PRIVATE_KEY, msg, 0, 0);
-    }
-
-
-    appendChatLogWithHTMLNodeEvent(null, msg);
+    appendChatLogWithHTMLNodeEvent(null, message);
 });
