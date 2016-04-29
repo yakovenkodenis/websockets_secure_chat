@@ -138,8 +138,11 @@ export default class DES {
     }
 
     encrypt64bit(message) {
-        let bitsArrayMsg = this._stringToBitsArray(message);
-        let bitsArrayKey = this._stringToBitsArray(this.key);
+        return this.crypt(message, true, false);
+    }
+
+    decrypt64bit(message, msgInBits=false) {
+        return this.crypt(message, false, msgInBits);
     }
 
     crypt(message, encrypt=true, msgInBits=false) {
@@ -175,17 +178,35 @@ export default class DES {
 
         if (encrypt) {
             for (let i = 0; i < 16; ++i) {
-                // TODO implement feistel function rounds
+                let prevR = R;
+                let rFeistel = this.feistelFunction(R, subkeys[i]);
+                R = [];
+                for (let j = 0; j < 32; ++j) {
+                    R.push(L[j] ^ rFeistel[j]);
+                }
+                L = prevR;
             }
         } else {
             for (let i = 15; i >= 0; --i) {
-                // TODO implement feistel function rounds
+                let prevL = L;
+                let lFeistel = this.feistelFunction(L, subkeys[i]);
+                L = [];
+                for (let j = 0; j < 32; ++j) {
+                    L.push(R[j] ^ lFeistel[j]);
+                }
+                R = prevL;
             }
         }
 
         let beforeFinalPermute = L.concat(R);
 
         // compute final permutation
+        let finalPermute = [];
+        for (let i of this._final_permutation) {
+            finalPermute.push(beforeFinalPermute[i - 1]);
+        }
+
+        return finalPermute;
     }
 
     feistelFunction(r32bit, subkey48bit) {
@@ -196,13 +217,13 @@ export default class DES {
 
         let subkeyXorR = [];
         for (let i = 0; i < 48; ++i) {
-            subkeyXorR.push(r48bit[i] ^ subkeys48bit[i]);
+            subkeyXorR.push(r48bit[i] ^ subkey48bit[i]);
         }
 
         // Divide subkeyXorR into 8 6-bit blocks for computing s-boxes
-        b6bitBlocks = this._chunkify(subkeyXorR);
+        let b6bitBlocks = this._chunkify(subkeyXorR, 8);
 
-        afterSboxes32bit = [];
+        let afterSboxes32bit = [];
         for (let i = 0; i < 8; ++i) {
             afterSboxes32bit.concat(
                 this.computeSBox(this._sbox[i], b6bitBlocks[i])
@@ -219,9 +240,9 @@ export default class DES {
     }
 
     computeSBox(sbox, b6bit) {
-        let row = parseInt(arr[0] + '' + arr[5], 2),
-            col = parseInt(arr.slice(1, 5).join(''), 2);
-        const sboxRes = this._sbox[row][col];
+        let row = parseInt(b6bit[0] + '' + b6bit[5], 2),
+            col = parseInt(b6bit.slice(1, 5).join(''), 2);
+        const sboxRes = sbox[row][col];
 
         return this._createBinaryString(sboxRes)
                 .substr(28).split('')
