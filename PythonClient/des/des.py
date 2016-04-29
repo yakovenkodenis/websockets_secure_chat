@@ -140,6 +140,43 @@ class DES(object):
     def __init__(self, key):
         self.key = key
 
+    def encrypt(self, message):
+        padded = self.pkcs7_padding(message, pad=True)
+        result = []
+
+        for block in padded:
+            result += self.encrypt_64bit(''.join(str(i) for i in block))
+
+        return result
+
+    def decrypt(self, message, msg_in_bits=False):
+        bits_array_msg = []
+        if msg_in_bits:
+            bits_array_msg = message
+        else:
+            bits_array_msg = self._string_to_bitsarray(message)
+
+        if len(bits_array_msg) % 64 != 0:
+            raise ValueError('Ciphered code must be a multiple of 64')
+
+        blocks_lst = [
+            bits_array_msg[i:i + 64] for i in range(0, len(bits_array_msg), 64)
+        ]
+
+        result = []
+
+        for block in blocks_lst:
+            decrypted = self.decrypt_64bit(block, msg_in_bits=True)
+            bl = list(
+                ''.join(chr(int(
+                    ''.join(
+                        map(str, decrypted[i:i + 8])),
+                    2)) for i in range(0, len(decrypted), 8)))
+            bl = self._unpad(bl)
+            result += bl
+
+        return ''.join(result)
+
     def encrypt_64bit(self, message):
         return self.crypt(message, encrypt=True)
 
@@ -184,6 +221,17 @@ class DES(object):
 
         before_final_permute = L + R
         return [before_final_permute[i - 1] for i in self._final_permutation]
+
+    def pkcs7_padding(self, message, block_size=8, pad=True):
+        msg = list(message)
+        blocks_lst = [
+            msg[i:i + block_size] for i in range(0, len(msg), block_size)
+        ]
+
+        s = block_size
+        return [
+            self._pad(b, s) if len(b) < block_size else b for b in blocks_lst
+        ] if pad else blocks_lst
 
     def feistel_function(self, r_32bit, subkey_48bit):
         r_48bit = [r_32bit[i - 1] for i in self._expansion_function]
@@ -237,3 +285,20 @@ class DES(object):
         ba = bitarray.bitarray()
         ba.fromstring(string)
         return [1 if i else 0 for i in ba.tolist()]
+
+    def _pad(self, arr, block_size):
+        z = block_size - len(arr)
+        return arr + [z] * z
+
+    def _unpad(self, arr):
+        if str(arr[-1]).isdigit():
+            arr_str = ''.join(str(i) for i in arr)
+            i = j = int(arr[-1])
+
+            while arr_str[-1] == str(j) and i > 0:
+                arr_str = arr_str[:-1]
+                i -= 1
+
+            return list(arr_str)
+        else:
+            return arr
