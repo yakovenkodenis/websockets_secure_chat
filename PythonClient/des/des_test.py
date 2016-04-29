@@ -24,16 +24,9 @@ deciphered_bits = d.decrypt_64bit(cipher, msg_in_bits=True)
 print(len(deciphered_bits))
 l = deciphered_bits
 
+print(l)
+
 deciphered_str = ''.join(chr(int(
     ''.join(map(str, l[i:i + 8])), 2)) for i in range(0, len(l), 8))
 
 print(deciphered_str)
-
-print('------------------------')
-
-
-print(d._string_to_bitsarray('hi'))
-
-print('----------------------------')
-
-print(d.get_subkeys([0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1]))

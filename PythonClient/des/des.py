@@ -214,9 +214,6 @@ class DES(object):
         # Compute Permuted Choice 1 on the key
         key_56bit = [bits_array_key[i - 1] for i in self._pc1]
 
-        print('key_56bit:')
-        print(key_56bit)
-
         # Split the key into two 28-bit subkeys
         key_56_left, key_56_right = [
             key_56bit[i:i + 28] for i in range(0, 56, 28)
