@@ -3,7 +3,7 @@
 import base64
 import threading
 from tkinter import *
-from des_var2 import *
+from des.des import DES
 from random import randint
 from hashes.hash_function import hash_function
 from diffie_hellman.diffie_hellman import DiffieHellman
@@ -40,41 +40,43 @@ GENERATED_PUBLIC_KEY = None
 OTHER_PUBLIC_KEY = None
 DES_HASH_PRIVATE_KEY = None
 DH = None
-DES = None
+Des = None
 MESSAGE_COUNT = 0
 
 
 def emit_message(address=ADDRESS, port=PORT, message=''):
     with SocketIO(address, port, LoggingNamespace) as socketIO:
-        # TODO encrypt DES message
+        # Encrypt DES message
 
-        global DES
+        cipher = message
+
+        global Des
         global MESSAGE_COUNT
 
         MESSAGE_COUNT += 1
 
         if MESSAGE_COUNT != 1:
-            if not DES and DES_HASH_PRIVATE_KEY:
-                DES = des(bytes(DES_HASH_PRIVATE_KEY, 'ascii'), mode=ECB,
-                          IV='\0\0\0\0\0\0\0\0', pad='*', padmode=PAD_NORMAL)
+            if not Des and DES_HASH_PRIVATE_KEY:
+                Des = DES(DES_HASH_PRIVATE_KEY)
 
-            if DES:
-                message = bytes(message, 'ascii')
+            if Des:
                 print('BEFORE ENCRYPTION: ' + str(message))
-                message = DES.encrypt(message)
-                print('AFTER ENCRYPTION: ' + str(message))
+                cipher = Des.encrypt(message)
+                print(cipher)
 
-        print('ENCRYPTED_RESPONSE: ' + str(message))
+        print(cipher)
         print('DES_HASH_PRIVATE_KEY: ' + str(DES_HASH_PRIVATE_KEY))
-        print(DES)
+        print(Des)
 
-        if type(message) != 'bytes':
-            message = bytes(message, 'ascii')
+        print('BELOW WILL BE THE ENCODED MESSAGE:')
+        cipher_b64 = base64.b64encode(
+            bytes(''.join(str(b) for b in cipher), 'ascii')
+        ).decode('ascii')
 
-        message = str(base64.b64encode(message), 'ascii')
+        print(cipher_b64)
 
         response = {
-            'payload': message,
+            'payload': cipher_b64,
             'sender': 'me',
             'public_shared_key': GENERATED_PUBLIC_KEY,
             'encrypted': MESSAGE_COUNT != 1
@@ -120,20 +122,27 @@ def add_message_to_chat_log(*data):
                     DES_HASH_PRIVATE_KEY = des_hash
                     print('DES_HASH_PRIVATE_KEY: ' + str(DES_HASH_PRIVATE_KEY))
 
-            # TODO decrypt DES msg
+            # Decrypt DES msg
 
             print('CIPHERED_MESSAGE: ' + str(msg))
 
-            global DES
+            global Des
 
-            if not DES and DES_HASH_PRIVATE_KEY:
-                # DES = des(bytes(DES_HASH_PRIVATE_KEY, 'ascii'), mode=ECB,
-                #           IV='\0\0\0\0\0\0\0\0', pad='*', padmode=PAD_NORMAL)
-                DES = des(bytes(DES_HASH_PRIVATE_KEY, 'ascii'), mode=ECB,
-                          IV='\0\0\0\0\0\0\0\0', padmode=PAD_PKCS5)
+            if not Des and DES_HASH_PRIVATE_KEY:
+                Des = DES(DES_HASH_PRIVATE_KEY)
 
-            if DES:
-                msg = DES.decrypt(msg)
+            if Des:
+                try:
+                    print(list(base64.b64decode(msg).decode('ascii')))
+                    bits = list(
+                        map(int, list(base64.b64decode(msg).decode('ascii')))
+                    )
+                    msg = Des.decrypt(bits, msg_in_bits=True)
+                except Exception:
+                    msg = base64.b64decode(msg).decode('ascii')
+
+        else:
+            msg = base64.b64decode(msg).decode('ascii')
 
         log.insert(END, msg + '\n')
         log.see('end')
