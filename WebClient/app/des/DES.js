@@ -137,6 +137,43 @@ export default class DES {
         this.key = key;
     }
 
+    encrypt(message) {
+        let padded = this.pkcs7Padding(message),
+            result = [];
+
+        for (let block of padded) {
+            result = result.concat(this.encrypt64bit(block.join('')));
+        }
+
+        return result;
+    }
+
+    decrypt(message, msgInBits=false) {
+        let bitsArrayMsg;
+
+        if (msgInBits) {
+            bitsArrayMsg = message;
+        } else {
+            bitsArrayMsg = this._stringToBitsArray(message);
+        }
+
+        if (bitsArrayMsg.length % 64 !== 0) {
+            throw new Error('Ciphered code can only be a multiple of 64');
+        }
+
+        let blocksLst = this._chunkify(bitsArrayMsg, 64, true, 64);
+
+        let result = [];
+
+        for (let block of blocksLst) {
+            let decrypted = this.decrypt64bit(block, true),
+                bl = this._bitsArrayToCharArray(decrypted);
+            result = result.concat(this._unpad(bl));
+        }
+
+        return result.join('');
+    }
+
     encrypt64bit(message) {
         return this.crypt(message, true, false);
     }
@@ -209,6 +246,19 @@ export default class DES {
         return finalPermute;
     }
 
+    pkcs7Padding(message, blockSize = 8, pad=true) {
+        let msg = message.split(''),
+            blocksLst = this._chunkify(msg, blockSize, true, blockSize);
+
+        if (pad) {
+            let s = blockSize;
+            return blocksLst
+                    .map(b => b.length < s ? this._pad(b, s) : b);
+        } else {
+            return blocksLst;
+        }
+    }
+
     feistelFunction(r32bit, subkey48bit) {
         let r48bit = [];
         for (let i of this._expansion_function) {
@@ -225,7 +275,7 @@ export default class DES {
 
         let afterSboxes32bit = [];
         for (let i = 0; i < 8; ++i) {
-            afterSboxes32bit.concat(
+            afterSboxes32bit = afterSboxes32bit.concat(
                 this.computeSBox(this._sbox[i], b6bitBlocks[i])
             );
         }
@@ -288,6 +338,12 @@ export default class DES {
                 .map(i => parseInt(i));
     }
 
+    _bitsArrayToCharArray(arr) {
+        return this._chunkify(arr, 8, true, 8)
+                   .map(b => parseInt(b.join(''), 2))
+                   .map(c => String.fromCharCode(c));
+    }
+
     _stringToByteArray(str) {
         let byteArray = [],
             len = str.length,
@@ -326,7 +382,14 @@ export default class DES {
         return temp;
     }
 
-    _chunkify(a, n, balanced) {
+    _chunkify(a, n, balanced, chunkSize) {
+
+        if (!isNaN(chunkSize)) {
+            return a.map(
+                (e, i) => i % chunkSize === 0 ? a.slice(i, i + chunkSize) : null
+            ).filter(e => e);
+        }
+
         if (n < 2) {
             return [a];
         }
@@ -357,5 +420,28 @@ export default class DES {
             out.push(a.slice(size * n));
         }
         return out;
+    }
+
+    _pad(arr, blockSize) {
+        let z = blockSize - arr.length;
+        return arr.concat(Array(z).fill(z));
+    }
+
+    _unpad(arr) {
+        let last = arr[arr.length - 1];
+
+        if (!isNaN(last)) {
+            let arrStr = arr.join('');
+            let i = +last, j = i;
+
+            while (arrStr[arrStr.length - 1] === j.toString() && i > 0) {
+                arrStr = arrStr.slice(0, -1);
+                i--;
+            }
+
+            return arrStr.split('');
+        } else {
+            return arr;
+        }
     }
 }
