@@ -8,8 +8,8 @@ import {
     decryptMessage,
     getHTMLNodeForMessage
 } from './util/chatFunctions';
-import { des } from './des/des_var2';
 import DiffieHellman from './diffie_hellman/diffie_hellman';
+import DES from './des/DES';
 
 
 
@@ -22,7 +22,7 @@ global.GENERATED_PUBLIC_KEY = null;
 global.OTHER_PUBLIC_KEY = null;
 global.DES_HASH_PRIVATE_KEY = null;
 global.DH = null;
-global.DES = null;
+global.Des = null;
 global.MESSAGE_COUNT = 0;
 
 
@@ -31,6 +31,12 @@ function appendChatLogWithHTMLNodeEvent(e, message) {
     const sender = message ? 'other' : 'mine';
 
     if (msg !== '') {
+        console.log('SHITTY MSG: ' + msg);
+        // try {
+        //     msg = sender === 'other' ? atob(msg) : msg;
+        // } catch (e) {
+
+        // }
         chatLog.appendChild(getHTMLNodeForMessage(msg, sender));
         chatLog.scrollIntoView(false);
         textArea.value = '';
@@ -38,12 +44,26 @@ function appendChatLogWithHTMLNodeEvent(e, message) {
         if (sender === 'mine') {
 
             MESSAGE_COUNT++;
-            // TODO DES encrypt message
+            // DES encrypt message
 
-            if (DES_HASH_PRIVATE_KEY && MESSAGE_COUNT !== 1) {
-                // msg = des(DES_HASH_PRIVATE_KEY, msg, 1, 0, '0x0000000000000000', '*');
-                msg = des(DES_HASH_PRIVATE_KEY, msg, 1, 0, '0x0000000000000000', 1);
+            let cipher = msg;
+
+            if (MESSAGE_COUNT !== 1) {
+                if (!Des && DES_HASH_PRIVATE_KEY) {
+                    Des = new DES(DES_HASH_PRIVATE_KEY);
+                }
+
+                if (Des) {
+                    console.log('BEFORE ENCRYPTION: ' + msg);
+                    cipher = Des.encrypt(msg);
+                }
             }
+
+            if (cipher.constructor === Array) {
+                msg = cipher.join('');
+            }
+            console.log('BEFORE btoa: ' + msg);
+            msg = btoa(msg);
 
             console.log('ENCRYPTED_RESPONSE: ' + msg);
 
@@ -105,8 +125,6 @@ socket.on('chat_message', (data) => {
     let otherPublicKey = data['message'].public_shared_key;
     let encrypted = data['message'].encrypted;
 
-    message = new Buffer(message, 'base64').toString();
-
     if (encrypted) {
         if (!OTHER_PUBLIC_KEY ||
             (OTHER_PUBLIC_KEY && OTHER_PUBLIC_KEY !== otherPublicKey)) {
@@ -125,13 +143,24 @@ socket.on('chat_message', (data) => {
             }
         }
 
-        // TODO DES decrypt message
+        // DES decrypt message
 
         console.log('CIPHERED_MESSAGE: ' + message);
 
-        if (DES_HASH_PRIVATE_KEY) {
-            message = des(DES_HASH_PRIVATE_KEY, message, 0, 0);
+        if (!Des && DES_HASH_PRIVATE_KEY) {
+           Des = new DES(DES_HASH_PRIVATE_KEY);
         }
+
+        if (Des && atob(message).length % 8 === 0) {
+            let bits = atob(message).split('').map(i => parseInt(i));
+            message = Des.decrypt(bits, true);
+        }
+    }
+
+    try {
+        message = atob(message);
+    } catch (e) {
+        message = message;
     }
 
     appendChatLogWithHTMLNodeEvent(null, message);
