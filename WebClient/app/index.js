@@ -10,12 +10,6 @@ import {
 import DES from './des/DES';
 
 
-// global.P = null;
-// global.G = null;
-// global.A = null;
-// global.K = null;
-// global.PRIVATE_KEY = randInt();
-// global.DES_HASH_PRIVATE_KEY = null;
 global.Des = null;
 
 
@@ -80,7 +74,6 @@ socket.on('public_keys', (data) => {
     console.log(data['message']);
     console.log(B);
     console.log(K);
-    console.log(Des);
 });
 
 socket.on('chat_message', (data) => {
