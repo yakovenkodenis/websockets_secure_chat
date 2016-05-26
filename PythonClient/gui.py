@@ -27,7 +27,7 @@ nick.pack(side='bottom', fill='x', expand='true')
 log.pack(side='top', fill='both', expand='true')
 
 
-ADDRESS = 'http://192.168.1.101'
+ADDRESS = 'http://127.0.0.1'
 PORT = 8080
 
 # Diffie-Hellman public generator and prime
@@ -43,6 +43,8 @@ DH = None
 Des = None
 MESSAGE_COUNT = 0
 
+
+OTHER_PUBLIC_KEYS = []
 
 def emit_message(address=ADDRESS, port=PORT, message=''):
     with SocketIO(address, port, LoggingNamespace) as socketIO:
@@ -68,7 +70,7 @@ def emit_message(address=ADDRESS, port=PORT, message=''):
         print('DES_HASH_PRIVATE_KEY: ' + str(DES_HASH_PRIVATE_KEY))
         print(Des)
 
-        print('BELOW WILL BE THE ENCODED MESSAGE:')
+        # print('BELOW WILL BE THE ENCODED MESSAGE:')
         cipher_b64 = base64.b64encode(
             bytes(''.join(str(b) for b in cipher), 'ascii')
         ).decode('ascii')
@@ -106,6 +108,8 @@ def add_message_to_chat_log(*data):
             global DES_HASH_PRIVATE_KEY
             global DH
 
+            global OTHER_PUBLIC_KEYS
+
             if not OTHER_PUBLIC_KEY or (
                OTHER_PUBLIC_KEY and OTHER_PUBLIC_KEY != other_public_key):
                 OTHER_PUBLIC_KEY = other_public_key
@@ -113,18 +117,18 @@ def add_message_to_chat_log(*data):
                 if DH:
                     DH.gen_key(OTHER_PUBLIC_KEY)
                     SHARED_KEY = DH.get_shared_secret()
-                    print('P: ' + str(P))
-                    print('G: ' + str(G))
-                    print('PRIVATE_KEY:' + str(PRIVATE_KEY))
-                    print('OTHER_PUBLIC_KEY:' + str(OTHER_PUBLIC_KEY))
-                    print('SHARED_KEY: ' + str(SHARED_KEY))
+                    # print('P: ' + str(P))
+                    # print('G: ' + str(G))
+                    # print('PRIVATE_KEY:' + str(PRIVATE_KEY))
+                    # print('OTHER_PUBLIC_KEY:' + str(OTHER_PUBLIC_KEY))
+                    # print('SHARED_KEY: ' + str(SHARED_KEY))
                     des_hash = hash_function(bytes(str(SHARED_KEY), 'ascii'))
                     DES_HASH_PRIVATE_KEY = des_hash
-                    print('DES_HASH_PRIVATE_KEY: ' + str(DES_HASH_PRIVATE_KEY))
+                    # print('DES_HASH_PRIVATE_KEY: ' + str(DES_HASH_PRIVATE_KEY))
 
             # Decrypt DES msg
 
-            print('CIPHERED_MESSAGE: ' + str(msg))
+            # print('CIPHERED_MESSAGE: ' + str(msg))
 
             global Des
 
@@ -133,7 +137,7 @@ def add_message_to_chat_log(*data):
 
             if Des:
                 try:
-                    print(list(base64.b64decode(msg).decode('ascii')))
+                    # print(list(base64.b64decode(msg).decode('ascii')))
                     bits = list(
                         map(int, list(base64.b64decode(msg).decode('ascii')))
                     )
@@ -166,7 +170,7 @@ def receive_public_keys_callback(*data):
             DH = DiffieHellman(generator=g, prime=p,
                                key_length=key_length, private_key=PRIVATE_KEY)
             GENERATED_PUBLIC_KEY = DH.public_key
-            print('GENERATED_PUBLIC_KEY: ' + str(GENERATED_PUBLIC_KEY))
+            # print('GENERATED_PUBLIC_KEY: ' + str(GENERATED_PUBLIC_KEY))
 
         P = p
         G = g
